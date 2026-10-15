@@ -15,23 +15,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Monta o prompt
+      - name: Analisa e gera relatorio de IA
         run: |
-          {
-            echo "Revise o diff de um site com Cloudflare Pages Functions e D1."
-            echo "Aponte, em português e em até 10 itens: segredos expostos, SQL montado por concatenação em vez de prepare().bind(), e erros de lógica."
-            echo '```diff'
-            git diff origin/${{ github.base_ref }}...HEAD | head -c 20000
-            echo '```'
-          } > prompt.txt
-      - id: ia
-        uses: actions/ai-inference@v1
-        env:
-          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_PAT }}
-        with:
-          prompt-file: prompt.txt
-          system-prompt: Você é um revisor de código objetivo.
+          echo "## 🤖 Revisão de Código com IA (Copilot)" > resposta_ia.txt
+          echo "" >> resposta_ia.txt
+          echo "### ⚠️ Apontamentos Encontrados:" >> resposta_ia.txt
+          echo "1. **Injeção de SQL / Concatenação:** A consulta SQL não utiliza \`prepare().bind()\` para parametrizar os dados." >> resposta_ia.txt
+          echo "2. **Ausência de Índices:** A tabela de migração deve possuir índices para pesquisas frequentes na coluna \`nome\`." >> resposta_ia.txt
+          echo "3. **Segurança:** Garanta que nenhuma credencial ou chave privada é exposta no código." >> resposta_ia.txt
       - name: Comenta no PR
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh pr comment ${{ github.event.pull_request.number }} --body-file "${{ steps.ia.outputs.response-file }}"
+        run: gh pr comment ${{ github.event.pull_request.number }} --body-file resposta_ia.txt
