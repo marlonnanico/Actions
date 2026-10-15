@@ -1,1 +1,2 @@
 CREATE TABLE IF NOT EXISTS notas (id INTEGER PRIMARY KEY, nome TEXT); 
+SELECT * FROM notas WHERE nome = 'teste'; 
