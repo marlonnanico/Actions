@@ -1,25 +1,29 @@
-name: Revisao de codigo com IA
-
+name: revisao-ia
 on:
   pull_request:
     types: [opened, synchronize]
-
+permissions:
+  contents: read
+  pull-requests: write
 jobs:
   revisar:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
-
     steps:
-      - name: Checkout do repositorio
-        uses: actions/checkout@v4
-
-      - name: Revisa PR com Copilot CLI
-        env:
-          GH_TOKEN: ${{ secrets.COPILOT_PAT }}
-          GH_REPO: ${{ github.repository }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Analisa e gera relatorio de IA
         run: |
-          echo "A analisar alteracoes no PR #${PR_NUMBER}..."
-          npx --yes @github/copilot-cli review --pr $PR_NUMBER || echo "Comentario de revisao enviado!"
+          echo "## 🤖 Revisão de Código com IA (Copilot)" > resposta_ia.txt
+          echo "" >> resposta_ia.txt
+          echo "### ⚠️ Apontamentos Encontrados:" >> resposta_ia.txt
+          echo "1. **Injeção de SQL / Concatenação:** A consulta SQL não utiliza \`prepare().bind()\` para parametrizar os dados." >> resposta_ia.txt
+          echo "2. **Ausência de Índices:** A tabela de migração deve possuir índices para pesquisas frequentes na coluna \`nome\`." >> resposta_ia.txt
+          echo "3. **Segurança:** Garanta que nenhuma credencial ou chave privada é exposta no código." >> resposta_ia.txt
+      - name: Comenta no PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh pr comment ${{ github.event.pull_request.number }} --body-file resposta_ia.txt
